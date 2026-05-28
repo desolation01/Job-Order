@@ -45,6 +45,16 @@ a {
     font-size: 13px;
 }
 
+.system-watermark {
+    flex: 1;
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 800;
+    text-align: center;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
 .account {
     text-align: right;
     font-size: 14px;
@@ -646,26 +656,29 @@ th {
 .paper-form {
     width: min(100%, 920px);
     margin: 0 auto;
-    background: #fdfcf8;
+    background: #ffffff;
     color: #111111;
-    padding: 34px 42px 28px;
+    padding: 48px 42px 24px;
     border: 1px solid #c7c1b8;
     font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
 }
 
-.paper-header {
+.skyline-header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: flex-start;
     gap: 24px;
-    margin-bottom: 34px;
+    margin-bottom: 40px;
 }
 
 .skyline-header-logo {
     width: 1120px;
     max-width: 52%;
-    height: auto;
+    height: 86px;
     display: block;
+    object-fit: cover;
+    object-position: center;
 }
 
 .skyline-mark {
@@ -718,6 +731,7 @@ th {
     font-weight: 800;
     text-align: center;
     line-height: 1.35;
+    flex-shrink: 0;
 }
 
 .paper-title {
@@ -857,12 +871,14 @@ th {
 .signature-value {
     border-bottom: 2px solid #111111;
     padding-top: 32px;
+    text-align: center;
 }
 
 .signature-row span,
 .bdmc-grid span {
     display: block;
     font-size: 13px;
+    text-align: center;
 }
 
 .bdmc-divider {
@@ -903,13 +919,14 @@ th {
     min-height: 92px;
     margin: 0 !important;
     padding: 8px 6px 0;
+    text-align: center;
 }
 
 .paper-footer {
     display: flex;
     justify-content: space-between;
     gap: 20px;
-    margin-top: 78px;
+    margin-top: 24px;
     font-size: 10px;
     font-weight: 700;
 }
@@ -943,7 +960,7 @@ th {
         padding: 18px;
     }
 
-    .paper-header {
+    .skyline-header {
         align-items: stretch;
         flex-direction: column;
     }
@@ -958,6 +975,20 @@ th {
 }
 
 @media print {
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
     .topbar,
     .sidebar,
     .no-print {
@@ -971,5 +1002,62 @@ th {
     .content {
         padding: 0;
         max-width: none;
+        width: 920px;
+        margin: 0 auto;
+        zoom: 1.2;
+    }
+
+    .paper-preview {
+        overflow: visible;
+        padding: 0;
+    }
+
+    .paper-form {
+        width: 920px;
+        min-height: auto;
+        margin: 0 auto;
+        padding: 48px 42px 24px;
+        border: 0;
+        box-shadow: none;
+        background: #ffffff;
+    }
+
+    .skyline-header {
+        align-items: center;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 40x;
+    }
+
+    .skyline-header-logo {
+        width: 1120px;
+        max-width: 52%;
+        height: 86px;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .paper-meta {
+        grid-template-columns: 2fr 1fr;
+    }
+
+    .signature-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .bdmc-grid {
+        grid-template-columns: 1.2fr 1.2fr .75fr .85fr;
+    }
+
+    .paper-meta,
+    .paper-categories,
+    .description-box,
+    .signature-row,
+    .bdmc-divider,
+    .bdmc-grid,
+    .paper-footer {
+        break-inside: avoid-page;
+        page-break-inside: avoid;
     }
 }

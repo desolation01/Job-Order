@@ -21,13 +21,13 @@ header('Content-Type: text/html; charset=utf-8');
 <head>
     <meta charset="utf-8">
     <title>Admin Export PDF - <?= e($order['jo_number']) ?></title>
-    <link rel="stylesheet" href="/job-order-system/assets/css/style.css?v=15">
+    <link rel="stylesheet" href="/job-order-system/assets/css/style.css?v=33">
 </head>
 <body>
 <main class="content">
     <div class="export-actions no-print">
         <button type="button" onclick="window.print()">Print Form</button>
-        <button type="button" class="secondary" onclick="savePdfFile('/job-order-system/admin/download_pdf?id=<?= $id ?>', '<?= e($order['jo_number']) ?>.pdf')">Save as PDF</button>
+        <button type="button" class="secondary" onclick="window.print()">Save as PDF</button>
     </div>
     <?php require __DIR__ . '/../includes/paper_job_order.php'; ?>
     <p class="muted no-print">TCPDF/FPDF can replace this HTML job order form exporter for fixed-coordinate PDF Output().</p>

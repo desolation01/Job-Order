@@ -9,7 +9,7 @@ $title = $title ?? 'Job Order Management System';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($title) ?></title>
-    <link rel="stylesheet" href="/job-order-system/assets/css/style.css?v=15">
+    <link rel="stylesheet" href="/job-order-system/assets/css/style.css?v=35">
 </head>
 <body>
 <header class="topbar">
@@ -17,6 +17,7 @@ $title = $title ?? 'Job Order Management System';
         <strong>Skyline Hospital and Medical Center</strong>
         <span>Business Development and Marketing Communications</span>
     </div>
+    <div class="system-watermark">System by: Tristan.Namingit@gmail.com</div>
     <?php if (current_user()): ?>
         <div class="account">
             <?= e(current_user()['full_name']) ?> (<?= e(current_user()['role']) ?>)

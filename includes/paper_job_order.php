@@ -29,7 +29,7 @@ if (!empty($order['date_filed'])) {
 }
 ?>
 <section class="paper-form">
-    <div class="paper-header">
+    <div class="skyline-header">
         <img class="skyline-header-logo" src="/job-order-system/assets/images/Skyline%20Logo.png?v=1" alt="Skyline Hospital and Medical Center">
         <div class="bdmc-pill">BUSINESS DEVELOPMENT AND<br>MARKETING COMMUNICATIONS</div>
     </div>
