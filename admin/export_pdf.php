@@ -21,7 +21,7 @@ header('Content-Type: text/html; charset=utf-8');
 <head>
     <meta charset="utf-8">
     <title>Admin Export PDF - <?= e($order['jo_number']) ?></title>
-    <link rel="stylesheet" href="/job-order-system/assets/css/style.css?v=10">
+    <link rel="stylesheet" href="/job-order-system/assets/css/style.css?v=15">
 </head>
 <body>
 <main class="content">

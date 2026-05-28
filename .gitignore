@@ -5,6 +5,7 @@ CODEX.md
 .env
 .env.*
 config/database.local.php
+config/email.local.php
 
 # Runtime uploads and generated files
 assets/uploads/job-order-images/*

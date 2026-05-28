@@ -19,30 +19,47 @@ foreach ($categories as $category) {
         $otherCategory = (string) $category['other_category_text'];
     }
 }
+
+$footerDate = '';
+if (!empty($order['date_filed'])) {
+    $dateObj = DateTime::createFromFormat('Y-m-d', (string) $order['date_filed']);
+    if ($dateObj && $dateObj->format('Y-m-d') === (string) $order['date_filed']) {
+        $footerDate = $dateObj->format('m.d.y');
+    }
+}
 ?>
 <section class="paper-form">
     <div class="paper-header">
-        <div class="skyline-mark">
-            <img class="skyline-logo" src="/job-order-system/assets/images/15b4f773-f103-4f7d-ac7f-de286683823c.png?v=3" alt="Skyline logo">
-            <div class="skyline-wordmark">
-                <strong>SKYLINE</strong>
-                <span>HOSPITAL AND MEDICAL CENTER</span>
-            </div>
-        </div>
+        <img class="skyline-header-logo" src="/job-order-system/assets/images/Skyline%20Logo.png?v=1" alt="Skyline Hospital and Medical Center">
         <div class="bdmc-pill">BUSINESS DEVELOPMENT AND<br>MARKETING COMMUNICATIONS</div>
     </div>
 
     <div class="paper-title">JOB ORDER FORM</div>
 
     <div class="paper-meta">
-        <div class="meta-left">
-            <div class="paper-cell"><strong>Requesting Department:</strong> <?= e($order['requesting_department'] ?? '') ?></div>
-            <div class="paper-cell tall"><strong>Project Name:</strong> <?= e($order['project_name'] ?? '') ?></div>
+        <div class="meta-left meta-left-compact">
+            <div class="paper-cell">
+                <span class="meta-label">Requesting Department:</span>
+                <span class="meta-value"><?= e($order['requesting_department'] ?? '') ?></span>
+            </div>
+            <div class="paper-cell">
+                <span class="meta-label">Project Name:</span>
+                <span class="meta-value"><?= e($order['project_name'] ?? '') ?></span>
+            </div>
         </div>
-        <div class="meta-right">
-            <div class="paper-cell"><strong>J.O No.:</strong> <?= e($order['jo_number'] ?? '') ?></div>
-            <div class="paper-cell"><strong>Date Filed:</strong> <?= e($order['date_filed'] ?? '') ?></div>
-            <div class="paper-cell"><strong>Date Needed:</strong> <?= e($order['date_needed'] ?? '') ?></div>
+        <div class="meta-right meta-right-compact">
+            <div class="paper-cell">
+                <span class="meta-label">J.O No.:</span>
+                <span class="meta-value"><?= e($order['jo_number'] ?? '') ?></span>
+            </div>
+            <div class="paper-cell">
+                <span class="meta-label">Date Filed:</span>
+                <span class="meta-value"><?= e($order['date_filed'] ?? '') ?></span>
+            </div>
+            <div class="paper-cell">
+                <span class="meta-label">Date Needed:</span>
+                <span class="meta-value"><?= e($order['date_needed'] ?? '') ?></span>
+            </div>
         </div>
     </div>
 
@@ -91,18 +108,17 @@ foreach ($categories as $category) {
             <p class="signature-value"><?= e($order['assigned_to'] ?? '') ?></p>
             <span>Signature over Printed Name</span>
         </div>
-        <div>
-            <strong>DATE RECEIVED</strong>
-            <p><?= e($order['date_received'] ?? '') ?></p>
+        <div class="bdmc-date-box">
+            <div class="bdmc-date-label">DATE RECEIVED</div>
+            <p class="bdmc-date-value"><?= e($order['date_received'] ?? '') ?></p>
         </div>
-        <div>
-            <strong>DATE ACCOMPLISHED</strong>
-            <p><?= e($order['date_accomplished'] ?? '') ?></p>
+        <div class="bdmc-date-box">
+            <div class="bdmc-date-label">DATE ACCOMPLISHED</div>
+            <p class="bdmc-date-value"><?= e($order['date_accomplished'] ?? '') ?></p>
         </div>
     </div>
 
     <div class="paper-footer">
-        <span>SALES AND MARKETING FORM 101 - JOB ORDER FORM<br>VERSION 4</span>
-        <span>SALES AND MARKETING DEPARTMENT<br>10.23.24</span>
+        <span>SALES AND MARKETING DEPARTMENT<br><?= e($footerDate) ?></span>
     </div>
 </section>

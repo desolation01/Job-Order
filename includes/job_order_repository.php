@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/email_notifications.php';
+
 function category_options(PDO $pdo): array
 {
     return $pdo->query('SELECT id, category_name FROM categories ORDER BY id')->fetchAll();
@@ -65,6 +67,9 @@ function list_job_orders(PDO $pdo, ?int $userId, array $filters): array
     if ($filters['status'] !== '') {
         $where[] = 'jo.status = ?';
         $params[] = $filters['status'];
+    } else {
+        $where[] = 'jo.status <> ?';
+        $params[] = 'Archived';
     }
 
     if ($filters['urgency'] !== '') {
@@ -120,7 +125,9 @@ function dashboard_counts(PDO $pdo, ?int $userId = null): array
         if (array_key_exists($status, $counts)) {
             $counts[$status] += $total;
         }
-        $counts['total'] += $total;
+        if ($status !== 'Archived') {
+            $counts['total'] += $total;
+        }
     }
 
     return $counts;
@@ -182,6 +189,128 @@ function job_order_comments(PDO $pdo, int $jobOrderId): array
     return $stmt->fetchAll();
 }
 
+function normalize_checklist_tasks(?string $encodedTasks): array
+{
+    if (!$encodedTasks) {
+        return [];
+    }
+
+    $decodedTasks = json_decode($encodedTasks, true);
+    if (!is_array($decodedTasks)) {
+        return [];
+    }
+
+    $tasks = [];
+    foreach ($decodedTasks as $task) {
+        if (is_array($task)) {
+            $text = trim((string) ($task['text'] ?? ''));
+            $done = !empty($task['done']);
+        } else {
+            $text = trim((string) $task);
+            $done = false;
+        }
+
+        if ($text !== '') {
+            $tasks[] = ['text' => $text, 'done' => $done];
+        }
+    }
+
+    return $tasks;
+}
+
+function checklist_tasks_from_texts(array $rawTasks, ?string $existingTasks = null): ?string
+{
+    $existingDoneByText = [];
+    foreach (normalize_checklist_tasks($existingTasks) as $task) {
+        $existingDoneByText[$task['text']][] = $task['done'];
+    }
+
+    $tasks = [];
+    foreach ($rawTasks as $rawTask) {
+        $text = trim((string) $rawTask);
+        if ($text === '') {
+            continue;
+        }
+
+        $done = false;
+        if (!empty($existingDoneByText[$text])) {
+            $done = (bool) array_shift($existingDoneByText[$text]);
+        }
+
+        $tasks[] = ['text' => $text, 'done' => $done];
+    }
+
+    return $tasks ? json_encode($tasks, JSON_UNESCAPED_UNICODE) : null;
+}
+
+function checklist_progress(?string $encodedTasks): array
+{
+    $tasks = normalize_checklist_tasks($encodedTasks);
+    $total = count($tasks);
+    $done = count(array_filter($tasks, static fn(array $task) => $task['done']));
+
+    return [
+        'total' => $total,
+        'done' => $done,
+        'percent' => $total > 0 ? (int) round(($done / $total) * 100) : 0,
+    ];
+}
+
+function checklist_progress_class(array $progress): string
+{
+    if ($progress['total'] === 0) {
+        return 'progress-empty';
+    }
+
+    if ($progress['percent'] === 100) {
+        return 'progress-complete';
+    }
+
+    if ($progress['percent'] >= 67) {
+        return 'progress-high';
+    }
+
+    if ($progress['percent'] >= 34) {
+        return 'progress-medium';
+    }
+
+    return 'progress-low';
+}
+
+function format_history_value(string $field, ?string $value): string
+{
+    if ($field !== 'checklist_tasks') {
+        return (string) $value;
+    }
+
+    $tasks = normalize_checklist_tasks($value);
+    if (!$tasks) {
+        return '';
+    }
+
+    return implode("\n", array_map(static function (array $task): string {
+        return ($task['done'] ? '[Done] ' : '[Pending] ') . $task['text'];
+    }, $tasks));
+}
+
+function update_job_order_checklist(PDO $pdo, int $jobOrderId, ?int $userId, array $doneIndexes): void
+{
+    $order = find_job_order($pdo, $jobOrderId, $userId);
+    if (!$order) {
+        http_response_code(404);
+        exit('Job order not found.');
+    }
+
+    $doneIndexes = array_flip(array_map('intval', $doneIndexes));
+    $tasks = normalize_checklist_tasks($order['checklist_tasks'] ?? null);
+    foreach ($tasks as $index => $task) {
+        $tasks[$index]['done'] = isset($doneIndexes[$index]);
+    }
+
+    $encodedTasks = $tasks ? json_encode($tasks, JSON_UNESCAPED_UNICODE) : null;
+    $pdo->prepare('UPDATE job_orders SET checklist_tasks = ? WHERE id = ?')->execute([$encodedTasks, $jobOrderId]);
+}
+
 function collect_job_order_input(array $post, bool $admin): array
 {
     $data = [
@@ -190,6 +319,7 @@ function collect_job_order_input(array $post, bool $admin): array
         'date_filed' => valid_date_or_null($post['date_filed'] ?? ''),
         'date_needed' => valid_date_or_null($post['date_needed'] ?? ''),
         'job_description' => trim((string) ($post['job_description'] ?? '')),
+        'checklist_tasks' => checklist_tasks_from_texts((array) ($post['checklist_tasks'] ?? [])),
         'urgency' => in_array($post['urgency'] ?? '', ['Low', 'Medium', 'High', 'Critical'], true) ? $post['urgency'] : 'Low',
         'requested_by' => trim((string) ($post['requested_by'] ?? '')),
         'requested_by_date' => valid_date_or_null($post['requested_by_date'] ?? ''),
@@ -254,8 +384,8 @@ function create_job_order(PDO $pdo, int $userId, array $data, array $categoryIds
     $dateFiled = date('Y-m-d');
     $stmt = $pdo->prepare("INSERT INTO job_orders (
             user_id, jo_number, requesting_department, project_name, date_filed, date_needed,
-            job_description, urgency, status, requested_by, requested_by_date, noted_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?)");
+            job_description, checklist_tasks, urgency, status, requested_by, requested_by_date, noted_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?)");
     $stmt->execute([
         $userId,
         generate_jo_number($pdo),
@@ -264,6 +394,7 @@ function create_job_order(PDO $pdo, int $userId, array $data, array $categoryIds
         $dateFiled,
         $data['date_needed'],
         $data['job_description'],
+        $data['checklist_tasks'],
         $data['urgency'],
         $data['requested_by'],
         $data['requested_by_date'],
@@ -272,6 +403,7 @@ function create_job_order(PDO $pdo, int $userId, array $data, array $categoryIds
 
     $jobOrderId = (int) $pdo->lastInsertId();
     save_categories($pdo, $jobOrderId, $categoryIds, $otherText);
+    notify_job_order_created($pdo, $jobOrderId);
     return $jobOrderId;
 }
 
@@ -284,7 +416,7 @@ function update_job_order_as_admin(PDO $pdo, int $jobOrderId, int $adminId, arra
     }
 
     $fields = [
-        'requesting_department', 'project_name', 'date_needed', 'job_description',
+        'requesting_department', 'project_name', 'date_needed', 'job_description', 'checklist_tasks',
         'urgency', 'status', 'requested_by', 'requested_by_date', 'noted_by', 'approved_by',
         'assigned_to', 'date_received', 'date_accomplished', 'admin_comment',
     ];
@@ -313,13 +445,18 @@ function update_job_order_as_admin(PDO $pdo, int $jobOrderId, int $adminId, arra
 
 function update_job_order_status(PDO $pdo, int $jobOrderId, int $adminId, string $status, string $comment = ''): void
 {
+    update_job_order_status_scoped($pdo, $jobOrderId, $adminId, $status, null, $comment);
+}
+
+function update_job_order_status_scoped(PDO $pdo, int $jobOrderId, int $editorId, string $status, ?int $userId = null, string $comment = ''): void
+{
     if (!is_valid_job_order_status($status)) {
         http_response_code(422);
         exit('Invalid status.');
     }
     $status = canonical_job_order_status($status);
 
-    $current = find_job_order($pdo, $jobOrderId, null);
+    $current = find_job_order($pdo, $jobOrderId, $userId);
     if (!$current) {
         http_response_code(404);
         exit('Job order not found.');
@@ -328,12 +465,12 @@ function update_job_order_status(PDO $pdo, int $jobOrderId, int $adminId, string
     if ($current['status'] !== $status) {
         $pdo->prepare('UPDATE job_orders SET status = ? WHERE id = ?')->execute([$status, $jobOrderId]);
         $pdo->prepare('INSERT INTO job_order_history (job_order_id, edited_by, field_changed, old_value, new_value) VALUES (?, ?, "status", ?, ?)')
-            ->execute([$jobOrderId, $adminId, $current['status'], $status]);
+            ->execute([$jobOrderId, $editorId, $current['status'], $status]);
     }
 
     if ($comment !== '') {
         $pdo->prepare('UPDATE job_orders SET admin_comment = ? WHERE id = ?')->execute([$comment, $jobOrderId]);
         $pdo->prepare('INSERT INTO job_order_comments (job_order_id, admin_id, comment) VALUES (?, ?, ?)')
-            ->execute([$jobOrderId, $adminId, $comment]);
+            ->execute([$jobOrderId, $editorId, $comment]);
     }
 }

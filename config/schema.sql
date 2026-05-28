@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS job_orders (
     assigned_to VARCHAR(150),
     date_received DATE,
     date_accomplished DATE,
+    checklist_tasks LONGTEXT,
     admin_comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -79,6 +80,12 @@ CREATE TABLE IF NOT EXISTS job_order_imports (
     import_status ENUM('Pending Review', 'Saved', 'Rejected') DEFAULT 'Pending Review',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS notification_recipients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(190) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT IGNORE INTO categories (category_name) VALUES

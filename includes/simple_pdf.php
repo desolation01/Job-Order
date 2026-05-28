@@ -52,8 +52,6 @@ function build_job_order_pdf(array $order, array $categories): string
     ];
 
     $stream = '';
-    $stream .= pdf_text(72, 775, 'SKYLINE', 30);
-    $stream .= pdf_text(72, 758, 'HOSPITAL AND MEDICAL CENTER', 11);
     $stream .= pdf_rect(360, 760, 170, 42);
     $stream .= pdf_text(375, 785, 'BUSINESS DEVELOPMENT AND', 10);
     $stream .= pdf_text(374, 770, 'MARKETING COMMUNICATIONS', 10);
@@ -163,4 +161,3 @@ function output_job_order_pdf(array $order, array $categories): never
     echo build_job_order_pdf($order, $categories);
     exit;
 }
-

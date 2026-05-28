@@ -32,8 +32,8 @@ require_once __DIR__ . '/../includes/header.php';
         <?php foreach ($history as $row): ?>
             <tr>
                 <td><?= e(ucwords(str_replace('_', ' ', strtolower((string) $row['field_changed'])))) ?></td>
-                <td><?= nl2br(e($row['old_value'])) ?></td>
-                <td><?= nl2br(e($row['new_value'])) ?></td>
+                <td><?= nl2br(e(format_history_value((string) $row['field_changed'], $row['old_value']))) ?></td>
+                <td><?= nl2br(e(format_history_value((string) $row['field_changed'], $row['new_value']))) ?></td>
                 <td><?= e($row['edited_by']) ?></td>
                 <td><?= e($row['edited_at']) ?></td>
             </tr>

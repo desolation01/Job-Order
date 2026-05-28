@@ -22,7 +22,7 @@ require_once __DIR__ . '/../includes/header.php';
     </select>
     <select name="status">
         <option value="">All statuses</option>
-        <?php foreach (['Pending', 'Approved', 'Denied', 'Archived'] as $status): ?>
+        <?php foreach (['Pending', 'Approved', 'Denied'] as $status): ?>
             <option <?= selected($filters['status'], $status) ?>><?= e($status) ?></option>
         <?php endforeach; ?>
     </select>
@@ -46,7 +46,7 @@ require_once __DIR__ . '/../includes/header.php';
 </form>
 <div class="table-wrap">
     <table>
-        <thead><tr><th>J.O No.</th><th>Project Name</th><th>Requesting Department</th><th>Category</th><th>Urgency</th><th>Status</th><th>Date Filed</th><th>Date Needed</th><th>Actions</th></tr></thead>
+        <thead><tr><th>J.O No.</th><th>Project Name</th><th>Requesting Department</th><th>Category</th><th>Urgency</th><th>Status</th><th>Progress</th><th>Date Filed</th><th>Date Needed</th><th>Actions</th></tr></thead>
         <tbody>
         <?php foreach ($orders as $order): ?>
             <tr>
@@ -56,9 +56,17 @@ require_once __DIR__ . '/../includes/header.php';
                 <td><?= e($order['categories'] ?? '') ?></td>
                 <td><span class="badge <?= e(badge_class($order['urgency'])) ?>"><?= e($order['urgency']) ?></span></td>
                 <td><span class="badge <?= e(badge_class($order['status'])) ?>"><?= e($order['status']) ?></span></td>
+                <?php require __DIR__ . '/../includes/checklist_progress_cell.php'; ?>
                 <td><?= e(format_display_date($order['date_filed'])) ?></td>
                 <td><?= e(format_display_date($order['date_needed'])) ?></td>
                 <td class="actions">
+                    <?php if ($order['status'] !== 'Archived'): ?>
+                        <form method="post" action="/job-order-system/archive_action" class="inline-form">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="id" value="<?= (int) $order['id'] ?>">
+                            <button type="submit" class="compact warning" data-confirm="Archive this job order?">Archive</button>
+                        </form>
+                    <?php endif; ?>
                     <a href="/job-order-system/user/view_job_order?id=<?= (int) $order['id'] ?>">View</a>
                     <a href="/job-order-system/user/version_history?id=<?= (int) $order['id'] ?>">Edit History</a>
                     <a href="/job-order-system/user/export_pdf?id=<?= (int) $order['id'] ?>">Export PDF</a>

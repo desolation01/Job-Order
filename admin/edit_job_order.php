@@ -30,8 +30,10 @@ $adminMode = true;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $originalDateFiled = (string) ($order['date_filed'] ?? '');
+    $originalChecklistTasks = (string) ($order['checklist_tasks'] ?? '');
     $order = array_merge($order, collect_job_order_input($_POST, true));
     $order['date_filed'] = $originalDateFiled;
+    $order['checklist_tasks'] = checklist_tasks_from_texts((array) ($_POST['checklist_tasks'] ?? []), $originalChecklistTasks);
     $chosenCategoryIds = array_map('intval', $_POST['categories'] ?? []);
     $selectedCategoryIds = $chosenCategoryIds;
     $otherText = trim((string) ($_POST['other_category_text'] ?? ''));

@@ -27,6 +27,7 @@ $urgencyFilterBase = [
 ];
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<div class="admin-dashboard-page">
 <div class="dashboard-title-row">
     <h1>Admin Dashboard</h1>
     <div class="urgency-buttons" aria-label="Urgency levels">
@@ -49,6 +50,9 @@ require_once __DIR__ . '/../includes/header.php';
     <a class="card card-link<?= $filters['status'] === 'Denied' ? ' active' : '' ?>" href="/job-order-system/admin/dashboard?<?= e(http_build_query(array_merge($cardFilterBase, ['status' => 'Denied']))) ?>">
         <span class="muted">Denied</span><strong><?= (int) $counts['Denied'] ?></strong>
     </a>
+    <a class="card card-link<?= $filters['status'] === 'Archived' ? ' active' : '' ?>" href="/job-order-system/admin/dashboard?<?= e(http_build_query(array_merge($cardFilterBase, ['status' => 'Archived']))) ?>">
+        <span class="muted">Archived</span><strong><?= (int) $counts['Archived'] ?></strong>
+    </a>
 </section>
 <form class="panel toolbar" method="get">
     <input name="search" placeholder="Search all job orders" value="<?= e($filters['search']) ?>">
@@ -60,7 +64,7 @@ require_once __DIR__ . '/../includes/header.php';
     </select>
     <select name="status">
         <option value="">All statuses</option>
-        <?php foreach (['Pending', 'Approved', 'Denied', 'Archived'] as $status): ?>
+        <?php foreach (['Pending', 'Approved', 'Denied'] as $status): ?>
             <option <?= selected($filters['status'], $status) ?>><?= e($status) ?></option>
         <?php endforeach; ?>
     </select>
@@ -81,9 +85,9 @@ require_once __DIR__ . '/../includes/header.php';
     </select>
     <button type="submit">Filter</button>
 </form>
-<div class="table-wrap">
+<div class="table-wrap admin-dashboard-table">
     <table>
-        <thead><tr><th>J.O No.</th><th>Project Name</th><th>Department</th><th>Category</th><th>Urgency</th><th>Status</th><th>Date Filed</th><th>Date Needed</th><th>Submitted By</th><th>Actions</th></tr></thead>
+        <thead><tr><th>J.O No.</th><th>Project Name</th><th>Department</th><th>Category</th><th>Urgency</th><th>Status</th><th>Progress</th><th>Date Filed</th><th>Date Needed</th><th>Submitted By</th><th>Actions</th></tr></thead>
         <tbody>
         <?php foreach ($orders as $order): ?>
             <tr>
@@ -93,34 +97,47 @@ require_once __DIR__ . '/../includes/header.php';
                 <td><?= e($order['categories'] ?? '') ?></td>
                 <td><span class="badge <?= e(badge_class($order['urgency'])) ?>"><?= e($order['urgency']) ?></span></td>
                 <td><span class="badge <?= e(badge_class($order['status'])) ?>"><?= e($order['status']) ?></span></td>
+                <?php require __DIR__ . '/../includes/checklist_progress_cell.php'; ?>
                 <td><?= e(format_display_date($order['date_filed'])) ?></td>
                 <td><?= e(format_display_date($order['date_needed'])) ?></td>
                 <td><?= e($order['submitted_by']) ?></td>
-                <td class="actions">
-                    <?php if ($order['status'] !== 'Approved'): ?>
-                        <form method="post" action="/job-order-system/admin/status_action" class="inline-form">
-                            <?= csrf_field() ?>
-                            <input type="hidden" name="id" value="<?= (int) $order['id'] ?>">
-                            <input type="hidden" name="status" value="Approved">
-                            <button type="submit" class="compact">Approve</button>
-                        </form>
+                <td class="admin-actions">
+                    <?php if ($order['status'] !== 'Archived'): ?>
+                        <div class="admin-action-row">
+                            <?php if ($order['status'] !== 'Approved'): ?>
+                                <form method="post" action="/job-order-system/admin/status_action" class="inline-form">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="id" value="<?= (int) $order['id'] ?>">
+                                    <input type="hidden" name="status" value="Approved">
+                                    <button type="submit" class="compact" data-confirm="Approve this job order?">Approve</button>
+                                </form>
+                            <?php endif; ?>
+                            <?php if ($order['status'] !== 'Denied'): ?>
+                                <form method="post" action="/job-order-system/admin/status_action" class="inline-form">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="id" value="<?= (int) $order['id'] ?>">
+                                    <input type="hidden" name="status" value="Denied">
+                                    <button type="submit" class="compact danger" data-confirm="Deny this job order?">Deny</button>
+                                </form>
+                            <?php endif; ?>
+                            <form method="post" action="/job-order-system/archive_action" class="inline-form">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="id" value="<?= (int) $order['id'] ?>">
+                                <button type="submit" class="compact warning" data-confirm="Archive this job order?">Archive</button>
+                            </form>
+                        </div>
                     <?php endif; ?>
-                    <?php if ($order['status'] !== 'Denied'): ?>
-                        <form method="post" action="/job-order-system/admin/status_action" class="inline-form">
-                            <?= csrf_field() ?>
-                            <input type="hidden" name="id" value="<?= (int) $order['id'] ?>">
-                            <input type="hidden" name="status" value="Denied">
-                            <button type="submit" class="compact danger" data-confirm="Deny this job order?">Deny</button>
-                        </form>
-                    <?php endif; ?>
-                    <a href="/job-order-system/admin/view_job_order?id=<?= (int) $order['id'] ?>">View</a>
-                    <a href="/job-order-system/admin/edit_job_order?id=<?= (int) $order['id'] ?>">Edit</a>
-                    <a href="/job-order-system/admin/export_pdf?id=<?= (int) $order['id'] ?>">Export PDF</a>
-                    <a href="/job-order-system/admin/version_history?id=<?= (int) $order['id'] ?>">History</a>
+                    <div class="admin-action-row admin-link-row">
+                        <a href="/job-order-system/admin/view_job_order?id=<?= (int) $order['id'] ?>">View</a>
+                        <a href="/job-order-system/admin/edit_job_order?id=<?= (int) $order['id'] ?>">Edit</a>
+                        <a href="/job-order-system/admin/export_pdf?id=<?= (int) $order['id'] ?>">Export</a>
+                        <a href="/job-order-system/admin/version_history?id=<?= (int) $order['id'] ?>">History</a>
+                    </div>
                 </td>
             </tr>
         <?php endforeach; ?>
         </tbody>
     </table>
+</div>
 </div>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

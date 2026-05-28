@@ -6,6 +6,15 @@ $errors = $errors ?? [];
 $selectedCategoryIds = $selectedCategoryIds ?? [];
 $otherText = $otherText ?? '';
 $adminMode = $adminMode ?? false;
+$checklistTasks = [];
+if (!empty($order['checklist_tasks'])) {
+    foreach (normalize_checklist_tasks((string) $order['checklist_tasks']) as $task) {
+        $checklistTasks[] = $task['text'];
+    }
+}
+if (!$checklistTasks) {
+    $checklistTasks = [''];
+}
 ?>
 <section class="panel">
     <div class="form-grid">
@@ -58,6 +67,19 @@ $adminMode = $adminMode ?? false;
         <textarea name="job_description" rows="8" required><?= e($order['job_description'] ?? '') ?></textarea>
         <small><?= e($errors['job_description'] ?? '') ?></small>
     </label>
+
+    <fieldset class="checklist-panel">
+        <legend>Checklist Tasks</legend>
+        <div class="checklist-tasks" data-checklist>
+            <?php foreach ($checklistTasks as $task): ?>
+                <div class="checklist-row">
+                    <input name="checklist_tasks[]" value="<?= e($task) ?>" placeholder="Enter task item">
+                    <button type="button" class="button secondary compact" data-remove-task>Remove</button>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        <button type="button" class="button secondary compact" data-add-task onclick="addChecklistTask(this)">Add Task</button>
+    </fieldset>
 
     <div class="form-grid">
         <label>Requested By
