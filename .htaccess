@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /job-order-system/
+
+# Redirect explicit .php URLs to extensionless form
+RewriteCond %{THE_REQUEST} \s/+job-order-system/([^\s?]+)\.php(?:[\s?]|$) [NC]
+RewriteRule ^ %1 [R=301,L]
+
+# Allow extensionless URLs to map to existing PHP files
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+?)/?$ $1.php [L]

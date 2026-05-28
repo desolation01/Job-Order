@@ -1,0 +1,27 @@
+# Project-private guidance
+CODEX.md
+
+# Local environment and secrets
+.env
+.env.*
+config/database.local.php
+
+# Runtime uploads and generated files
+assets/uploads/job-order-images/*
+!assets/uploads/job-order-images/.htaccess
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor/IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
